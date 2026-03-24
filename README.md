@@ -16,3 +16,7 @@ pipx install -e .
 
 - `zk` installed and configured
 - Python 3.13+
+
+## Usage
+
+Run `zk-graph-view` under your `zk` directory.
