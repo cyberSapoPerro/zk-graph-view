@@ -9,4 +9,4 @@ dependencies = [
 ]
 
 [project.scripts]
-graph-view = "zk_graph_view.cli:main"
+zk-graph-view = "zk_graph_view.cli:main"
