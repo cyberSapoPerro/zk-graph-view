@@ -1,5 +1,5 @@
 [project]
-name = "graph-view"
+name = "zk-graph-view"
 version = "0.1.0"
 description = "Visualize zk graphs using python"
 readme = "README.md"
@@ -9,4 +9,4 @@ dependencies = [
 ]
 
 [project.scripts]
-graph-view = "graph_view.cli:main"
+graph-view = "zk_graph_view.cli:main"
