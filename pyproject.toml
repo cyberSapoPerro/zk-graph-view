@@ -1,0 +1,12 @@
+[project]
+name = "graph-view"
+version = "0.1.0"
+description = "Visualize zk graphs using python"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "pyvis"
+]
+
+[project.scripts]
+graph-view = "graph_view.cli:main"
