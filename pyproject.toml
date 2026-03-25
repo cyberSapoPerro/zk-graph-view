@@ -5,7 +5,8 @@ description = "Visualize zk graphs using python"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-  "pyvis"
+  "pyvis",
+  "colorir"
 ]
 
 [project.scripts]
