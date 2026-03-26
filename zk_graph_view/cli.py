@@ -13,7 +13,7 @@ from pyvis.network import Network
 
 def ensure_zk_dir_exist():
     if not os.path.isdir(".zk"):
-        print("Error: .zk directory not found in the current directory.", file=sys.stderr)
+        print("Error: .zk directory not found in the current directory", file=sys.stderr)
         sys.exit(1)
 
 
