@@ -69,3 +69,9 @@ zk viz
 * The tool **must be executed inside a directory containing a `.zk/` folder**.
 * Ensure your notes are properly tagged if you rely on tags for visualization or filtering.
 * Output HTML files can be opened in any modern browser.
+
+--
+
+## Licence
+
+This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
