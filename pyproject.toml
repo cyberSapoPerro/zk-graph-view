@@ -11,3 +11,6 @@ dependencies = [
 
 [project.scripts]
 zk-graph-view = "zk_graph_view.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
