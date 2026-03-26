@@ -1,3 +1,4 @@
+import argparse
 import json
 import subprocess
 import tempfile
@@ -8,7 +9,7 @@ import numpy as np
 from pyvis.network import Network
 
 
-def get_zk_graph():
+def get_json_from_cli():
     result = subprocess.run(
         ["zk", "graph", "--format=json"],
         capture_output=True,
@@ -19,19 +20,37 @@ def get_zk_graph():
     return data
 
 
-def make_html_graph():
-    data = get_zk_graph()
-    net = Network(height="100vh", width="100%", directed=True)
+def get_json_from_input_path(input_path):
+    with open(input_path) as f:
+        data = json.load(f)
+    return data
+
+
+def make_graph(
+    data,
+    palette,
+    output_path=None
+):
+    net = Network(
+        height="100vh",
+        width="100%",
+        directed=True,
+        cdn_resources="remote"
+    )
 
     # --- Tags ---
-    tags = [note["tags"][0] if note["tags"] else "untagged" for note in data["notes"]]
+    tags = [
+        note["tags"][0] if note["tags"] else "untagged" for note in data["notes"]
+    ]
 
     # -- Color map ---
-    grad = cl.PolarGrad(["ffff00", "ff00ff"])  # Creates a gradient from yellow to magenta
-    palette = cl.StackPalette(grad.n_colors(len(tags)))
-    palette *= cl.HCLab(1, 0.5, 1)  # Desaturates the palette 50% to get a more pleasing look
+    palette = cl.StackPalette.load(
+        palette,
+        palettes_dir=cl.config.USR_PALETTES_DIR
+    ).resize(len(tags))
     color_map = {tag: color for tag, color in zip(tags, palette)}
     color_map["untagged"] = cl.Hex("#808080")
+
 
     # -- Nodes size ---
     backlinks = {}
@@ -67,15 +86,54 @@ def make_html_graph():
         net.add_edge(source, target)
 
     # --- Open the graph ---
-    with tempfile.NamedTemporaryFile(suffix=".html") as f:
-        html_path = f.name
-    net.write_html(html_path)
-    return html_path
+    if output_path is None:
+        with tempfile.NamedTemporaryFile(suffix=".html") as f:
+            html_path = f.name
+        net.write_html(html_path)
+        webbrowser.open(f"file://{html_path}")
+    else:
+        net.write_html(output_path)
+        webbrowser.open(f"file://{output_path}")
 
 
 def main():
-    html_path = make_html_graph()
-    webbrowser.open(f"file://{html_path}")
+    parser = argparse.ArgumentParser(
+        description="Visualize your zk graph. Run inside a zk directory.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
+    parser.add_argument(
+        "-i", "--input",
+        metavar="FILE",
+        help="Path to input JSON file (if omitted, uses `zk graph --format=json`)"
+    )
+
+    parser.add_argument(
+        "-o", "--output",
+        metavar="FILE",
+        help="Path to output HTML file (if omitted, don't stores the graph)"
+    )
+
+    parser.add_argument(
+        "-c", "--colors",
+        metavar="PALETTE",
+        default="carnival",
+        help="Color palette name (see colorir docs: https://colorir.readthedocs.io/en/latest/builtin_palettes.html)"
+    )
+
+    args = parser.parse_args()
+
+    input_path = args.input
+    output_path = args.output
+    colors = args.colors
+
+    if input_path:
+        data = get_json_from_input_path(input_path)
+    else:
+        data = get_json_from_cli()
+
+    make_graph(data, palette=colors, output_path=output_path)
+
 
 if __name__ == "__main__":
     main()
