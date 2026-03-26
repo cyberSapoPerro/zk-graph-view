@@ -1,9 +1,11 @@
 import json
 import subprocess
-import webbrowser
 import tempfile
-from pyvis.network import Network
+import webbrowser
+
 import colorir as cl
+import numpy as np
+from pyvis.network import Network
 
 
 def get_zk_graph():
@@ -31,6 +33,17 @@ def make_html_graph():
     color_map = {tag: color for tag, color in zip(tags, palette)}
     color_map["untagged"] = cl.Hex("#808080")
 
+    # -- Nodes size ---
+    backlinks = {}
+    for note in data["notes"]:
+        note_id = note["filenameStem"]
+        n_backlinks = 0
+        for link in data["links"]:
+            target = link["targetPath"].replace(".md", "")
+            if note_id == target:
+                n_backlinks += 1
+        backlinks[note_id] = n_backlinks
+
     # --- Nodes ---
     for note in data["notes"]:
         node_id = note["filenameStem"]  # unique ID
@@ -39,7 +52,13 @@ def make_html_graph():
             tag = note["tags"][0]
         else:
             tag = "untagged"
-        net.add_node(node_id, label=label, color=color_map[tag])
+        net.add_node(
+            node_id,
+            label=label,
+            color=color_map[tag],
+            size= 10 + 10 * np.log(backlinks[node_id] + 1),
+            shape="dot"
+        )
 
     # --- Edges ---
     for link in data["links"]:
