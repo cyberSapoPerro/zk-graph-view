@@ -1,3 +1,5 @@
+import os
+import sys
 import argparse
 import json
 import subprocess
@@ -7,6 +9,12 @@ import webbrowser
 import colorir as cl
 import numpy as np
 from pyvis.network import Network
+
+
+def ensure_zk_dir_exist():
+    if not os.path.isdir(".zk"):
+        print("Error: .zk directory not found in the current directory.", file=sys.stderr)
+        sys.exit(1)
 
 
 def get_json_from_cli():
@@ -24,6 +32,45 @@ def get_json_from_input_path(input_path):
     with open(input_path) as f:
         data = json.load(f)
     return data
+
+
+def build_legend_html(color_map):
+    rows = ""
+    for tag, color in color_map.items():
+        rows += f"""
+        <tr>
+            <td style="padding: 4px;">
+                <div style="
+                    width: 15px;
+                    height: 15px;
+                    background-color: {color};
+                    border-radius: 3px;
+                "></div>
+            </td>
+            <td style="padding: 4px;">{tag}</td>
+        </tr>
+        """
+
+    legend = f"""
+    <div style="
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+        z-index: 9999;
+        font-family: sans-serif;
+        font-size: 14px;
+    ">
+        <b>Tags</b>
+        <table>
+            {rows}
+        </table>
+    </div>
+    """
+    return legend
 
 
 def make_graph(
@@ -89,14 +136,25 @@ def make_graph(
     if output_path is None:
         with tempfile.NamedTemporaryFile(suffix=".html") as f:
             html_path = f.name
-        net.write_html(html_path)
-        webbrowser.open(f"file://{html_path}")
     else:
-        net.write_html(output_path)
-        webbrowser.open(f"file://{output_path}")
+        html_path = output_path
+    net.write_html(html_path)
+
+    # -- Make the lengend ---
+    legend_html = build_legend_html(color_map)
+    with open(html_path, "r+") as f:
+        html = f.read()
+        html = html.replace("</body>", legend_html + "\n</body>")
+        f.seek(0)
+        f.write(html)
+        f.truncate()
+
+    webbrowser.open(f"file://{html_path}")
 
 
 def main():
+    ensure_zk_dir_exist()
+
     parser = argparse.ArgumentParser(
         description="Visualize your zk graph. Run inside a zk directory.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
