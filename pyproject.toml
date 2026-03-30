@@ -6,7 +6,12 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
   "pyvis",
-  "colorir"
+  "colorir",
+  "networkx",
+  "matplotlib",
+  "numpy",
+  "typing",
+  "scipy"
 ]
 
 [project.scripts]
