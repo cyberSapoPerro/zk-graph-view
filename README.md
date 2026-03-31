@@ -70,7 +70,7 @@ zk viz
 * Ensure your notes are properly tagged if you rely on tags for visualization or filtering.
 * Output HTML files can be opened in any modern browser.
 
---
+---
 
 ## Licence
 
