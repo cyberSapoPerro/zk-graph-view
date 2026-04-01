@@ -53,6 +53,8 @@ zk-graph-view --static -o graph.png
 
 This renders a high-resolution PNG using matplotlib with the same tag-based coloring and node sizing. The layout is computed automatically (Kamada-Kawai for small graphs, spring layout for larger ones).
 
+![Static Graph Example](assets/static_graph_example.png)
+
 ---
 
 ## Configuration
