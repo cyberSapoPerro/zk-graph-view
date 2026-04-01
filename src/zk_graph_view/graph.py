@@ -2,11 +2,13 @@ import tempfile
 import webbrowser
 
 import colorir as cl
+import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 from pyvis.network import Network
 
 from .api import transform_json_data
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 
 def build_color_map(unique_tags: List[str], palette: str) -> Dict[str, cl.Hex]:
@@ -119,3 +121,64 @@ def make_interactive_graph(
         f.truncate()
 
     webbrowser.open(f"file://{html_path}")
+
+
+def make_static_graph(
+    data: Dict[str, Any],
+    palette: str,
+    layout: Dict[str, tuple[float, float]],
+    output_path: Optional[str] = None,
+) -> None:
+    """Render a static note graph using a pre-computed layout.
+
+    Uses the transformed data to build a directed graph and renders it
+    with matplotlib using the provided node positions.
+
+    Args:
+        data: Raw graph data with ``notes`` and ``links`` keys.
+        palette: Name of a Colorir palette to use for tag-based coloring.
+        layout: Dict mapping node IDs to (x, y) position tuples.
+        output_path: Path to save the graph image. Required.
+
+    Returns:
+        None. Saves the graph to ``output_path``.
+    """
+    if not output_path:
+        raise ValueError("output_path is required for static graph")
+
+    data = transform_json_data(data)
+
+    G = nx.DiGraph()
+
+    unique_tags: List[str] = list({note["tag"] for note in data["notes"]})
+    color_map = build_color_map(unique_tags, palette)
+
+    for note in data["notes"]:
+        G.add_node(
+            note["filenameStem"],
+            label=note["title"],
+            size=10 + 10 * np.log(note["backlinks"] + 1),
+        )
+
+    for link in data["links"]:
+        G.add_edge(link["sourcePath"], link["targetPath"])
+
+    node_colors = [str(color_map[note["tag"]]) for note in data["notes"]]
+    node_sizes = [
+        (10 + 10 * np.log(note["backlinks"] + 1)) * 20 for note in data["notes"]
+    ]
+
+    plt.figure(figsize=(14, 12))
+
+    nx.draw_networkx_nodes(G, layout, node_color=node_colors, node_size=node_sizes)
+    nx.draw_networkx_edges(
+        G, layout, arrows=True, arrowstyle="->", arrowsize=8, alpha=0.4
+    )
+
+    for tag, color in color_map.items():
+        plt.scatter([], [], c=str(color), label=tag)
+    plt.legend(title="Tags", loc="best")
+
+    plt.axis("off")
+
+    plt.savefig(output_path, bbox_inches="tight", dpi=300)
