@@ -74,20 +74,25 @@ def make_interactive_graph(
         html_path = output_path
     net.write_html(html_path)
 
-    def build_legend_html(color_map: Dict[str, cl.Hex]) -> str:
+    def build_legend_html(
+        color_map: Dict[str, cl.Hex], note_tags: Dict[str, str]
+    ) -> str:
         rows = ""
         for tag, color in color_map.items():
             rows += f"""
             <tr>
                 <td style="padding: 4px;">
-                    <div style="
+                    <div id="legend-{tag}" style="
                         width: 15px;
                         height: 15px;
                         background-color: {color};
                         border-radius: 3px;
-                    "></div>
+                        cursor: pointer;
+                        opacity: 1;
+                        transition: opacity 0.2s;
+                    " onclick="toggleTag('{tag}')"></div>
                 </td>
-                <td style="padding: 4px;">{tag}</td>
+                <td style="padding: 4px; cursor: pointer;" onclick="toggleTag('{tag}')">{tag}</td>
             </tr>
             """
 
@@ -99,20 +104,116 @@ def make_interactive_graph(
             background: white;
             border: 1px solid #ccc;
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             z-index: 9999;
-            font-family: sans-serif;
-            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 13px;
+            user-select: none;
+            min-width: 140px;
         ">
-            <b>Tags</b>
-            <table>
+            <b style="display: block; margin-bottom: 8px; color: #333;">Tags</b>
+            <span style="font-size: 11px; color: #888;">click to filter</span>
+            <table style="margin-top: 6px; border-collapse: collapse;">
                 {rows}
             </table>
+            <div style="display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+                <button onclick="hideAllTags()" style="
+                    flex: 1;
+                    padding: 5px 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    background: #f5f5f5;
+                    cursor: pointer;
+                    font-size: 12px;
+                    transition: background 0.15s;
+                "
+                onmouseover="this.style.background='#e8e8e8'"
+                onmouseout="this.style.background='#f5f5f5'">Hide All</button>
+                <button onclick="showAllTags()" style="
+                    flex: 1;
+                    padding: 5px 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    background: #f5f5f5;
+                    cursor: pointer;
+                    font-size: 12px;
+                    transition: background 0.15s;
+                "
+                onmouseover="this.style.background='#e8e8e8'"
+                onmouseout="this.style.background='#f5f5f5'">Show All</button>
+            </div>
         </div>
+        <script>
+            var hiddenTags = {{}};
+            var nodeTags = {note_tags};
+
+            function toggleTag(tag) {{
+                hiddenTags[tag] = !hiddenTags[tag];
+                var el = document.getElementById('legend-' + tag);
+                el.style.opacity = hiddenTags[tag] ? '0.3' : '1';
+                
+                for (var nodeId in nodeTags) {{
+                    if (nodeTags[nodeId] === tag) {{
+                        var node = network.body.data.nodes.get(nodeId);
+                        if (node) {{
+                            network.body.data.nodes.update({{
+                                id: nodeId,
+                                hidden: hiddenTags[tag]
+                            }});
+                        }}
+                    }}
+                }}
+            }}
+
+            function showAllTags() {{
+                for (var tag in hiddenTags) {{
+                    if (hiddenTags[tag]) {{
+                        hiddenTags[tag] = false;
+                        var el = document.getElementById('legend-' + tag);
+                        if (el) el.style.opacity = '1';
+                        
+                        for (var nodeId in nodeTags) {{
+                            if (nodeTags[nodeId] === tag) {{
+                                var node = network.body.data.nodes.get(nodeId);
+                                if (node) {{
+                                    network.body.data.nodes.update({{
+                                        id: nodeId,
+                                        hidden: false
+                                    }});
+                                }}
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+
+            function hideAllTags() {{
+                for (var tag in nodeTags) {{
+                    if (!hiddenTags[nodeTags[tag]]) {{
+                        hiddenTags[nodeTags[tag]] = true;
+                        var el = document.getElementById('legend-' + nodeTags[tag]);
+                        if (el) el.style.opacity = '0.3';
+                        
+                        for (var nodeId in nodeTags) {{
+                            if (nodeTags[nodeId] === nodeTags[tag]) {{
+                                var node = network.body.data.nodes.get(nodeId);
+                                if (node) {{
+                                    network.body.data.nodes.update({{
+                                        id: nodeId,
+                                        hidden: true
+                                    }});
+                                }}
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+        </script>
         """
         return legend
 
-    legend_html = build_legend_html(color_map)
+    note_tags = {note["filenameStem"]: note["tag"] for note in data["notes"]}
+    legend_html = build_legend_html(color_map, note_tags)
     with open(html_path, "r+") as f:
         html = f.read()
         html = html.replace("</body>", legend_html + "\n</body>")
