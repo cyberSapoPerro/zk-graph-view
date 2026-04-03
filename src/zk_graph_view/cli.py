@@ -1,5 +1,6 @@
 import argparse
 import networkx as nx
+from halo import Halo
 
 from zk_graph_view.api import (
     ensure_zk_dir_exist,
@@ -58,7 +59,8 @@ def main():
         data = get_json_from_cli()
 
     if not args.static:
-        make_interactive_graph(data, palette=colors, output_path=output_path)
+        with Halo(text="Generating interactive graph", spinner="dots"):
+            make_interactive_graph(data, palette=colors, output_path=output_path)
     else:
         data = transform_json_data(data)
 
@@ -76,7 +78,10 @@ def main():
         else:
             layout = nx.spring_layout(G, seed=42)
 
-        make_static_graph(data, palette=colors, layout=layout, output_path=output_path)
+        with Halo(text="Generating static graph", spinner="dots"):
+            make_static_graph(
+                data, palette=colors, layout=layout, output_path=output_path
+            )
 
 
 if __name__ == "__main__":

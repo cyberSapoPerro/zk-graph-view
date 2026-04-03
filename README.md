@@ -4,7 +4,7 @@ Visualize your Zettelkasten graph from [`zk`](https://github.com/zk-org/zk) as a
 
 `zk-graph-view` consumes the output of `zk graph --format=json` and renders it using `pyvis`.
 
-![Showcase](assets/demo.png)
+[![Watch the demo](assets/demo.gif)](https://github.com/cyberSapoPerro/zk-graph-view/releases/tag/v0.1.0/demo.mp4)
 
 ---
 
