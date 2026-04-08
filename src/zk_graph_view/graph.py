@@ -34,6 +34,11 @@ def build_ordered_tags(unique_tags: List[str]) -> List[str]:
     return [t for t in unique_tags if t != "untagged"] + ["untagged"]
 
 
+def should_render_legend(unique_tags: List[str]) -> bool:
+    """Return True when there is at least one tag other than untagged."""
+    return any(tag != "untagged" for tag in unique_tags)
+
+
 def make_interactive_graph(
     data: Dict[str, Any],
     palette: str,
@@ -59,7 +64,9 @@ def make_interactive_graph(
 
     unique_tags: List[str] = list({note["tag"] for note in data["notes"]})
     color_map = build_color_map(unique_tags, palette)
+    render_legend = should_render_legend(unique_tags)
     ordered_tags = build_ordered_tags(unique_tags)
+    render_legend = should_render_legend(unique_tags)
 
     for note in data["notes"]:
         net.add_node(
@@ -219,14 +226,15 @@ def make_interactive_graph(
         """
         return legend
 
-    note_tags = {note["filenameStem"]: note["tag"] for note in data["notes"]}
-    legend_html = build_legend_html(color_map, note_tags, ordered_tags)
-    with open(html_path, "r+") as f:
-        html = f.read()
-        html = html.replace("</body>", legend_html + "\n</body>")
-        f.seek(0)
-        f.write(html)
-        f.truncate()
+    if render_legend:
+        note_tags = {note["filenameStem"]: note["tag"] for note in data["notes"]}
+        legend_html = build_legend_html(color_map, note_tags, ordered_tags)
+        with open(html_path, "r+") as f:
+            html = f.read()
+            html = html.replace("</body>", legend_html + "\n</body>")
+            f.seek(0)
+            f.write(html)
+            f.truncate()
 
     webbrowser.open(f"file://{html_path}")
 
@@ -283,9 +291,10 @@ def make_static_graph(
         G, layout, arrows=True, arrowstyle="->", arrowsize=8, alpha=0.4
     )
 
-    for tag, color in color_map.items():
-        plt.scatter([], [], c=str(color), label=tag)
-    plt.legend(title="Tags", loc="best")
+    if render_legend:
+        for tag, color in color_map.items():
+            plt.scatter([], [], c=str(color), label=tag)
+        plt.legend(title="Tags", loc="best")
 
     plt.axis("off")
 
