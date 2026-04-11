@@ -1,6 +1,6 @@
 [project]
 name = "zk-graph-view"
-version = "0.1.0"
+version = "0.1.1"
 description = "Visualize zk graphs using python"
 readme = "README.md"
 requires-python = ">=3.13"
