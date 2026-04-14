@@ -90,6 +90,8 @@ def make_interactive_graph(
     def build_legend_html(
         color_map: Dict[str, cl.Hex], note_tags: Dict[str, str], ordered_tags: List[str]
     ) -> str:
+        tag_colors = {tag: str(color) for tag, color in color_map.items()}
+        untagged_color = str(color_map["untagged"])
         rows = ""
         for tag in ordered_tags:
             color = color_map[tag]
@@ -156,10 +158,27 @@ def make_interactive_graph(
                 onmouseover="this.style.background='#e8e8e8'"
                 onmouseout="this.style.background='#f5f5f5'">Show All</button>
             </div>
+            <div style="margin-top: 6px;">
+                <button id="toggle-colors-btn" onclick="toggleTagColors()" style="
+                    width: 100%;
+                    padding: 5px 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    background: #f5f5f5;
+                    cursor: pointer;
+                    font-size: 12px;
+                    transition: background 0.15s;
+                "
+                onmouseover="this.style.background='#e8e8e8'"
+                onmouseout="this.style.background='#f5f5f5'">Disable Colors</button>
+            </div>
         </div>
         <script>
             var hiddenTags = {{}};
             var nodeTags = {note_tags};
+            var tagColors = {tag_colors};
+            var untaggedColor = "{untagged_color}";
+            var useTagColors = true;
 
             function toggleTag(tag) {{
                 hiddenTags[tag] = !hiddenTags[tag];
@@ -219,6 +238,24 @@ def make_interactive_graph(
                                 }}
                             }}
                         }}
+                    }}
+                }}
+            }}
+
+            function toggleTagColors() {{
+                useTagColors = !useTagColors;
+                var btn = document.getElementById('toggle-colors-btn');
+                btn.textContent = useTagColors ? 'Disable Colors' : 'Enable Colors';
+
+                for (var nodeId in nodeTags) {{
+                    var node = network.body.data.nodes.get(nodeId);
+                    if (node) {{
+                        var tag = nodeTags[nodeId];
+                        var nodeColor = useTagColors ? (tagColors[tag] || untaggedColor) : untaggedColor;
+                        network.body.data.nodes.update({{
+                            id: nodeId,
+                            color: nodeColor
+                        }});
                     }}
                 }}
             }}
