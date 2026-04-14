@@ -113,19 +113,35 @@ def make_interactive_graph(
             """
 
         legend = f"""
-        <div style="
+        <div id="legend-container" style="
             position: fixed;
             top: 10px;
             right: 10px;
+            z-index: 9999;
             background: white;
             border: 1px solid #ccc;
             border-radius: 8px;
-            padding: 12px;
-            z-index: 9999;
+            padding: 10px;
+            min-width: 160px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             font-size: 13px;
             user-select: none;
-            min-width: 140px;
+        ">
+        <button id="toggle-legend-btn" onclick="toggleLegend()" style="
+            width: 100%;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f5f5f5;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.15s;
+        "
+        onmouseover="this.style.background='#e8e8e8'"
+        onmouseout="this.style.background='#f5f5f5'">Filter</button>
+        <div id="legend-panel" style="
+            margin-top: 8px;
+            display: none;
         ">
             <b style="display: block; margin-bottom: 8px; color: #333;">Tags</b>
             <span style="font-size: 11px; color: #888;">click to filter</span>
@@ -170,15 +186,23 @@ def make_interactive_graph(
                     transition: background 0.15s;
                 "
                 onmouseover="this.style.background='#e8e8e8'"
-                onmouseout="this.style.background='#f5f5f5'">Disable Colors</button>
+                onmouseout="this.style.background='#f5f5f5'">Enable Colors</button>
             </div>
+        </div>
         </div>
         <script>
             var hiddenTags = {{}};
             var nodeTags = {note_tags};
             var tagColors = {tag_colors};
             var untaggedColor = "{untagged_color}";
-            var useTagColors = true;
+            var useTagColors = false;
+            var legendVisible = false;
+
+            function toggleLegend() {{
+                legendVisible = !legendVisible;
+                var panel = document.getElementById('legend-panel');
+                panel.style.display = legendVisible ? 'block' : 'none';
+            }}
 
             function toggleTag(tag) {{
                 hiddenTags[tag] = !hiddenTags[tag];
@@ -242,11 +266,7 @@ def make_interactive_graph(
                 }}
             }}
 
-            function toggleTagColors() {{
-                useTagColors = !useTagColors;
-                var btn = document.getElementById('toggle-colors-btn');
-                btn.textContent = useTagColors ? 'Disable Colors' : 'Enable Colors';
-
+            function applyTagColors() {{
                 for (var nodeId in nodeTags) {{
                     var node = network.body.data.nodes.get(nodeId);
                     if (node) {{
@@ -259,6 +279,15 @@ def make_interactive_graph(
                     }}
                 }}
             }}
+
+            function toggleTagColors() {{
+                useTagColors = !useTagColors;
+                var btn = document.getElementById('toggle-colors-btn');
+                btn.textContent = useTagColors ? 'Disable Colors' : 'Enable Colors';
+                applyTagColors();
+            }}
+
+            applyTagColors();
         </script>
         """
         return legend
