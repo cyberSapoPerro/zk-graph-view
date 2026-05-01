@@ -38,18 +38,31 @@ def main():
         help="Color palette name (see colorir docs: https://colorir.readthedocs.io/en/latest/builtin_palettes.html)",
     )
 
+    parser.add_argument(
+        "--directed",
+        metavar="BOOL",
+        default=False,
+        help="Render a directed network graph"
+    )
+
     args = parser.parse_args()
 
     input_path = args.input
     output_path = args.output
     colors = args.colors
+    directed = args.directed
 
     if input_path:
         data = get_json_from_input_path(input_path)
     else:
         data = get_json_from_cli()
 
-    make_graph(data, palette=colors, output_path=output_path)
+    make_graph(
+        data,
+        palette=colors,
+        directed=directed,
+        output_path=output_path
+    )
 
 
 if __name__ == "__main__":

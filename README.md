@@ -8,9 +8,12 @@ Visualize your Zettelkasten graph from [`zk`](https://github.com/zk-org/zk) as a
 
 ## Features
 
-- Node size determined by the number of connections.
-- Interactive network visualization.
-- Tags-based coloring and filtering.
+- Set node size based on the number of connections
+- Visualize networks interactively
+- Apply tag-based coloring and filtering
+- Render directed or undirected graphs
+- Choose the color palette (*optional*)
+- Save the HTML output (*optional*)
 
 ---
 

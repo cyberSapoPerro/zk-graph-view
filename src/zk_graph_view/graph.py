@@ -237,6 +237,7 @@ def build_legend_html(
 def make_graph(
     data: Dict[str, Any],
     palette: str,
+    directed: bool,
     output_path: Optional[str] = None,
 ) -> None:
     """Render an interactive note graph using Pyvis.
@@ -252,7 +253,12 @@ def make_graph(
     """
     data = transform_json_data(data)
 
-    net = Network(height="100vh", width="100%", directed=False, cdn_resources="remote")
+    net = Network(
+        height="100vh",
+        width="100%",
+        directed=directed,
+        cdn_resources="remote"
+    )
 
     unique_tags: List[str] = list({note["tag"] for note in data["notes"]})
     color_map = build_color_map(unique_tags, palette)
