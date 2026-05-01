@@ -9,8 +9,6 @@ from zk_graph_view.graph import make_graph
 
 
 def main():
-    ensure_zk_dir_exist()
-
     parser = argparse.ArgumentParser(
         description="Visualize your zk graph. Run inside a zk directory.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -55,6 +53,7 @@ def main():
     if input_path:
         data = get_json_from_input_path(input_path)
     else:
+        ensure_zk_dir_exist()
         data = get_json_from_cli()
 
     make_graph(
