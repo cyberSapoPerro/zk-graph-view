@@ -48,6 +48,11 @@ def get_json_from_input_path(input_path: str) -> Dict[str, Any]:
         data = json.load(f)
     return data
 
+def get_json_from_pipe() -> Dict[str, Any]:
+    raw = sys.stdin.read()
+    data = json.loads(raw)
+    return data
+
 
 def transform_json_data(json_data: Dict[str, Any]) -> Dict[str, Any]:
     """Transform raw zk graph JSON into a structured format.

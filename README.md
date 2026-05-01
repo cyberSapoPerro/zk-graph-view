@@ -43,10 +43,18 @@ pipx install -e .
 
 ## Usage
 
-Run the tool inside a valid `zk` notebook directory:
+Run the tool from within a `zk` notebook directory:
 
 ```bash
 zk-graph-view
 ```
 
 This will generate an interactive HTML visualization.
+
+You can also use `zk` query options and pipe JSON output into `zk-graph-view`. For example:
+
+```bash
+zk graph -t a-tag --format=json | zk-graph-view
+```
+
+Will render a graph containing only the notes with the tag `a-tag`.

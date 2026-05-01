@@ -1,9 +1,11 @@
 import argparse
+import sys
 
 from zk_graph_view.api import (
     ensure_zk_dir_exist,
     get_json_from_cli,
     get_json_from_input_path,
+    get_json_from_pipe,
 )
 from zk_graph_view.graph import make_graph
 
@@ -52,6 +54,8 @@ def main():
 
     if input_path:
         data = get_json_from_input_path(input_path)
+    elif not sys.stdin.isatty():
+        data = get_json_from_pipe()
     else:
         ensure_zk_dir_exist()
         data = get_json_from_cli()
