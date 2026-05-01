@@ -1,18 +1,13 @@
 [project]
 name = "zk-graph-view"
-version = "0.1.1"
-description = "Visualize zk graphs using python"
+version = "0.1.2"
+description = "Visualize zk graphs in an HTML file"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
   "pyvis",
   "colorir",
-  "networkx",
-  "matplotlib",
-  "numpy",
   "typing",
-  "scipy",
-  "halo",
 ]
 
 [project.scripts]
