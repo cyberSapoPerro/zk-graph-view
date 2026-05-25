@@ -1,7 +1,4 @@
-"""Graph generation and visualization for zettelkasten notes."""
-
 import tempfile
-import warnings
 import webbrowser
 from typing import Any, Dict, List, Optional
 
@@ -268,52 +265,17 @@ def make_graph(
     render_legend = should_render_legend(unique_tags)
     ordered_tags = build_ordered_tags(unique_tags)
 
-    # Build set of node IDs for O(1) existence validation during edge processing
-    node_ids = set()
     for note in data["notes"]:
-        node_id = note["filenameStem"]
-        node_ids.add(node_id)
         net.add_node(
-            node_id,
+            note["filenameStem"],
             label=note["title"],
             color=color_map[note["tag"]],
             size=10 + 10 * np.log(note["backlinks"] + 1),
             shape="dot",
         )
 
-    # Validate edge references and aggregate orphaned edges by missing node
-    orphaned_refs: Dict[str, List[str]] = {}
     for link in data["links"]:
-        source = link["sourcePath"]
-        target = link["targetPath"]
-
-        # Skip edges with missing target node
-        if target not in node_ids:
-            if target not in orphaned_refs:
-                orphaned_refs[target] = []
-            orphaned_refs[target].append(source)
-            continue
-
-        # Skip edges with missing source node
-        if source not in node_ids:
-            if source not in orphaned_refs:
-                orphaned_refs[source] = []
-            orphaned_refs[source].append(target)
-            continue
-
-        # Only add edge if both source and target exist
-        net.add_edge(source, target)
-
-    # Emit aggregated warnings for each unique missing node
-    for missing_node, refs in orphaned_refs.items():
-        example_refs = ', '.join(refs[:3])
-        if len(refs) > 3:
-            example_refs += f'... and {len(refs) - 3} more'
-
-        warnings.warn(
-            f"Skipping edge(s) to missing node '{missing_node}'. "
-            f"Referenced by: {example_refs}"
-        )
+        net.add_edge(link["sourcePath"], link["targetPath"])
 
     if output_path is None:
         with tempfile.NamedTemporaryFile(suffix=".html") as f:
