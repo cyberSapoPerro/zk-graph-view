@@ -45,12 +45,19 @@ def main():
         help="Render a directed network graph"
     )
 
+    parser.add_argument(
+        "--show-tags",
+        action="store_true",
+        help="Show tags as nodes in the graph"
+    )
+
     args = parser.parse_args()
 
     input_path = args.input
     output_path = args.output
     colors = args.colors
     directed = args.directed
+    show_tags = args.show_tags
 
     if input_path:
         data = get_json_from_input_path(input_path)
@@ -64,7 +71,8 @@ def main():
         data,
         palette=colors,
         directed=directed,
-        output_path=output_path
+        output_path=output_path,
+        show_tags=show_tags,
     )
 
 
