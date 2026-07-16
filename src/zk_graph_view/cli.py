@@ -45,6 +45,14 @@ def main():
         help="Render a directed network graph"
     )
 
+    parser.add_argument(
+        "--orphans",
+        choices=["drop", "ghost", "error"],
+        default="drop",
+        help="Handle a link whose endpoint has no note: drop (skip and warn), "
+             "ghost (render a placeholder node), or error (raise)",
+    )
+
     args = parser.parse_args()
 
     input_path = args.input
@@ -64,7 +72,8 @@ def main():
         data,
         palette=colors,
         directed=directed,
-        output_path=output_path
+        output_path=output_path,
+        orphans=args.orphans,
     )
 
 

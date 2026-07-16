@@ -291,3 +291,66 @@ def test_subdir_link_connects_real_nodes():
         edge["from"] == "pages/n1" and edge["to"] == "journals/n2"
         for edge in net.edges
     )
+
+
+def test_orphans_ghost_renders_placeholder_node_and_edge():
+    """orphans='ghost' synthesizes a node for a missing target and keeps the edge."""
+    data = {
+        "notes": [
+            {"filenameStem": "n1", "path": "pages/n1.md", "title": "N1", "tags": []},
+        ],
+        "links": [
+            {"sourcePath": "pages/n1.md", "targetPath": "pages/missing.md"},
+        ],
+    }
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr("zk_graph_view.graph.webbrowser.open", lambda x: None)
+            net = make_graph(data, orphans="ghost")
+
+    assert [str(warning.message) for warning in w] == []
+    assert set(net.get_nodes()) == {"pages/n1", "pages/missing"}
+    assert any(
+        edge["from"] == "pages/n1" and edge["to"] == "pages/missing"
+        for edge in net.edges
+    )
+
+
+def test_orphans_ghost_reuses_one_node_for_repeated_target():
+    """A target missing but referenced by many notes becomes a single ghost node."""
+    data = {
+        "notes": [
+            {"filenameStem": "a", "path": "pages/a.md", "title": "A", "tags": []},
+            {"filenameStem": "b", "path": "pages/b.md", "title": "B", "tags": []},
+        ],
+        "links": [
+            {"sourcePath": "pages/a.md", "targetPath": "pages/hub.md"},
+            {"sourcePath": "pages/b.md", "targetPath": "pages/hub.md"},
+        ],
+    }
+
+    with pytest.MonkeyPatch().context() as m:
+        m.setattr("zk_graph_view.graph.webbrowser.open", lambda x: None)
+        net = make_graph(data, orphans="ghost")
+
+    assert net.get_nodes().count("pages/hub") == 1
+    assert sum(e["to"] == "pages/hub" for e in net.edges) == 2
+
+
+def test_orphans_error_raises_on_missing_endpoint():
+    """orphans='error' refuses to render when a link endpoint has no note."""
+    data = {
+        "notes": [
+            {"filenameStem": "n1", "path": "pages/n1.md", "title": "N1", "tags": []},
+        ],
+        "links": [
+            {"sourcePath": "pages/n1.md", "targetPath": "pages/missing.md"},
+        ],
+    }
+
+    with pytest.MonkeyPatch().context() as m:
+        m.setattr("zk_graph_view.graph.webbrowser.open", lambda x: None)
+        with pytest.raises(ValueError, match="pages/missing"):
+            make_graph(data, orphans="error")

@@ -237,11 +237,24 @@ def build_legend_html(
     return legend
 
 
+def _add_ghost_node(net: Network, node_id: str) -> None:
+    """Add a placeholder node for a link endpoint that has no backing note."""
+    net.add_node(
+        node_id,
+        label=node_id.split("/")[-1],
+        color={"background": "#f0f0f0", "border": "#b0b0b0"},
+        size=6,
+        shape="dot",
+        title="unresolved link",
+    )
+
+
 def make_graph(
     data: Dict[str, Any],
     palette: str = "carnival",
     directed: bool = False,
     output_path: Optional[str] = None,
+    orphans: str = "drop",
 ) -> Network:
     """Render an interactive note graph using Pyvis.
 
@@ -256,6 +269,9 @@ def make_graph(
         directed: Whether to render a directed network.
         output_path: If provided, saves the graph at this path; otherwise
             uses a temporary file.
+        orphans: How to handle a link whose endpoint has no note. ``"drop"``
+            skips the edge and warns; ``"ghost"`` renders a placeholder node
+            and keeps the edge; ``"error"`` raises ``ValueError``.
 
     Returns:
         The built Pyvis ``Network``.
@@ -287,27 +303,33 @@ def make_graph(
             shape="dot",
         )
 
-    # Validate edge references and aggregate orphaned edges by missing node
+    # Resolve edge endpoints. An endpoint with no note is handled per
+    # ``orphans``: "ghost" renders a placeholder node and keeps the edge,
+    # "error" raises, and "drop" (default) skips the edge and warns.
+    ghost_ids: set = set()
     orphaned_refs: Dict[str, List[str]] = {}
+
+    def resolve(node: str, referenced_by: str) -> bool:
+        if node in node_ids or node in ghost_ids:
+            return True
+        if orphans == "ghost":
+            _add_ghost_node(net, node)
+            ghost_ids.add(node)
+            return True
+        if orphans == "error":
+            raise ValueError(
+                f"Orphaned edge endpoint '{node}' referenced by '{referenced_by}'"
+            )
+        orphaned_refs.setdefault(node, []).append(referenced_by)
+        return False
+
     for link in data["links"]:
         source = link["sourcePath"]
         target = link["targetPath"]
-
-        # Skip edges with missing target node
-        if target not in node_ids:
-            if target not in orphaned_refs:
-                orphaned_refs[target] = []
-            orphaned_refs[target].append(source)
+        if not resolve(target, source):
             continue
-
-        # Skip edges with missing source node
-        if source not in node_ids:
-            if source not in orphaned_refs:
-                orphaned_refs[source] = []
-            orphaned_refs[source].append(target)
+        if not resolve(source, target):
             continue
-
-        # Only add edge if both source and target exist
         net.add_edge(source, target)
 
     # Emit aggregated warnings for each unique missing node
