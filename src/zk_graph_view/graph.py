@@ -271,7 +271,7 @@ def make_graph(
     # Build set of node IDs for O(1) existence validation during edge processing
     node_ids = set()
     for note in data["notes"]:
-        node_id = note["filenameStem"]
+        node_id = note["path"].replace(".md", "")
         node_ids.add(node_id)
         net.add_node(
             node_id,
@@ -323,7 +323,9 @@ def make_graph(
     net.write_html(html_path)
 
     if render_legend:
-        note_tags = {note["filenameStem"]: note["tag"] for note in data["notes"]}
+        note_tags = {
+            note["path"].replace(".md", ""): note["tag"] for note in data["notes"]
+        }
         legend_html = build_legend_html(color_map, note_tags, ordered_tags)
         with open(html_path, "r+") as f:
             html = f.read()

@@ -70,7 +70,7 @@ def transform_json_data(json_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     backlinks: Dict[str, int] = {}
     for note in json_data["notes"]:
-        note_id = note["filenameStem"]
+        note_id = note["path"].replace(".md", "")
         backlinks[note_id] = sum(
             1
             for link in json_data["links"]
@@ -81,7 +81,7 @@ def transform_json_data(json_data: Dict[str, Any]) -> Dict[str, Any]:
         {
             **note,
             "tag": note["tags"][0] if note["tags"] else "untagged",
-            "backlinks": backlinks[note["filenameStem"]],
+            "backlinks": backlinks[note["path"].replace(".md", "")],
         }
         for note in json_data["notes"]
     ]
