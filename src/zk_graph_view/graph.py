@@ -312,8 +312,8 @@ def make_graph(
     # Validate edge references and aggregate orphaned edges by missing node
     orphaned_refs: Dict[str, List[str]] = {}
     for link in data["links"]:
-        source = link["sourcePath"]
-        target = link["targetPath"]
+        source = link["sourcePath"].split("/")[-1]
+        target = link["targetPath"].split("/")[-1]
 
         # Skip edges with missing target node
         if target not in node_ids:
