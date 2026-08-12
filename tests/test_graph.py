@@ -2,6 +2,7 @@
 
 import warnings
 import pytest
+from zk_graph_view.api import transform_json_data
 from zk_graph_view.graph import make_graph
 
 
@@ -243,3 +244,50 @@ def test_multiple_missing_nodes():
         missing_nodes = [str(warning.message) for warning in w]
         assert any("missing-node-1" in msg for msg in missing_nodes)
         assert any("missing-node-2" in msg for msg in missing_nodes)
+
+
+def test_backlinks_counted_for_subdir_paths():
+    """Backlinks match notes to link targets by full path, not bare stem."""
+    data = {
+        "notes": [
+            {"filenameStem": "a", "path": "pages/a.md", "title": "A", "tags": []},
+            {"filenameStem": "b", "path": "pages/b.md", "title": "B", "tags": []},
+            {"filenameStem": "hub", "path": "pages/hub.md", "title": "Hub", "tags": []},
+        ],
+        "links": [
+            {"sourcePath": "pages/a.md", "targetPath": "pages/hub.md"},
+            {"sourcePath": "pages/b.md", "targetPath": "pages/hub.md"},
+        ],
+    }
+
+    out = transform_json_data(data)
+    by_id = {note["id"]: note for note in out["notes"]}
+
+    assert by_id["pages/hub"]["backlinks"] == 2
+    assert by_id["pages/a"]["backlinks"] == 0
+
+
+def test_subdir_link_connects_real_nodes():
+    """A link between two notes in subdirectories is a real edge, not an orphan."""
+    data = {
+        "notes": [
+            {"filenameStem": "n1", "path": "pages/n1.md", "title": "N1", "tags": []},
+            {"filenameStem": "n2", "path": "journals/n2.md", "title": "N2", "tags": []},
+        ],
+        "links": [
+            {"sourcePath": "pages/n1.md", "targetPath": "journals/n2.md"},
+        ],
+    }
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr("zk_graph_view.graph.webbrowser.open", lambda x: None)
+            net = make_graph(data)
+
+    assert [str(warning.message) for warning in w] == []
+    assert set(net.get_nodes()) == {"pages/n1", "journals/n2"}
+    assert any(
+        edge["from"] == "pages/n1" and edge["to"] == "journals/n2"
+        for edge in net.edges
+    )

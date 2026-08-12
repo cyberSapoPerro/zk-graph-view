@@ -249,21 +249,27 @@ def build_legend_html(
 
 def make_graph(
     data: Dict[str, Any],
-    palette: str,
-    directed: bool,
+    palette: str = "carnival",
+    directed: bool = False,
     output_path: Optional[str] = None,
     show_tags: bool = True,
 ) -> None:
     """Render an interactive note graph using Pyvis.
 
-    Transforms raw zk graph data, then builds a directed graph with nodes
-    colored by tag and sized by backlink count.
+    Transforms raw zk graph data, then builds a graph with nodes colored by tag
+    and sized by backlink count. Nodes and edges are keyed by the note's
+    canonical ``id`` (see :func:`transform_json_data`) so links between notes in
+    subdirectories resolve instead of being reported as orphans.
 
     Args:
         data: Raw graph data with ``notes`` and ``links`` keys.
         palette: Name of a Colorir palette to use for tag-based coloring.
+        directed: Whether to render a directed network.
         output_path: If provided, saves the graph at this path; otherwise
             uses a temporary file.
+
+    Returns:
+        The built Pyvis ``Network``.
     """
     data = transform_json_data(data)
 
@@ -282,7 +288,7 @@ def make_graph(
     # Build set of node IDs for O(1) existence validation during edge processing
     node_ids = set()
     for note in data["notes"]:
-        node_id = note["filenameStem"]
+        node_id = note["id"]
         node_ids.add(node_id)
         net.add_node(
             node_id,
@@ -351,7 +357,7 @@ def make_graph(
     net.write_html(html_path)
 
     if render_legend:
-        note_tags = {note["filenameStem"]: note["tag"] for note in data["notes"]}
+        note_tags = {note["id"]: note["tag"] for note in data["notes"]}
         legend_html = build_legend_html(color_map, note_tags, ordered_tags)
         with open(html_path, "r+") as f:
             html = f.read()
@@ -361,3 +367,5 @@ def make_graph(
             f.truncate()
 
     webbrowser.open(f"file://{html_path}")
+
+    return net
