@@ -253,7 +253,7 @@ def make_graph(
     directed: bool = False,
     output_path: Optional[str] = None,
     show_tags: bool = True,
-) -> None:
+) -> Network:
     """Render an interactive note graph using Pyvis.
 
     Transforms raw zk graph data, then builds a graph with nodes colored by tag
@@ -318,8 +318,8 @@ def make_graph(
     # Validate edge references and aggregate orphaned edges by missing node
     orphaned_refs: Dict[str, List[str]] = {}
     for link in data["links"]:
-        source = link["sourcePath"].split("/")[-1]
-        target = link["targetPath"].split("/")[-1]
+        source = link["sourcePath"]
+        target = link["targetPath"]
 
         # Skip edges with missing target node
         if target not in node_ids:
