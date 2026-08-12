@@ -74,7 +74,7 @@ def transform_json_data(json_data: Dict[str, Any]) -> Dict[str, Any]:
         backlinks[note_id] = sum(
             1
             for link in json_data["links"]
-            if note_id == link["targetPath"].replace(".md", "")
+            if note_id == link["targetPath"].replace(".md", "").split("/")[-1]
         )
 
     notes = [
