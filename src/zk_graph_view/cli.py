@@ -46,6 +46,11 @@ def main():
     )
 
     parser.add_argument(
+        "--orphans",
+        choices=["drop", "ghost", "error"],
+        default="drop",
+        help="Handle a link whose endpoint has no note: drop (skip and warn), "
+             "ghost (render a placeholder node), or error (raise)",
         "--show-tags",
         action="store_true",
         help="Show tags as nodes in the graph"
@@ -72,6 +77,7 @@ def main():
         palette=colors,
         directed=directed,
         output_path=output_path,
+        orphans=args.orphans,
         show_tags=show_tags,
     )
 
