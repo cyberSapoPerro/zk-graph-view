@@ -314,10 +314,6 @@ def make_graph(
             shape="dot",
         )
 
-    # Resolve edge endpoints. An endpoint with no note is handled per
-    # ``orphans``: "ghost" renders a placeholder node and keeps the edge,
-    # "error" raises, and "drop" (default) skips the edge and warns.
-    ghost_ids: set = set()
     # Add tag nodes and link notes to all their tags
     if show_tags:
         for tag in unique_tags:
@@ -335,6 +331,10 @@ def make_graph(
                 if tag in note.get("tags", []):
                     net.add_edge(note["filenameStem"], tag_id)
 
+    # Resolve edge endpoints. An endpoint with no note is handled per
+    # ``orphans``: "ghost" renders a placeholder node and keeps the edge,
+    # "error" raises, and "drop" (default) skips the edge and warns.
+    ghost_ids: set = set()
     # Validate edge references and aggregate orphaned edges by missing node
     orphaned_refs: Dict[str, List[str]] = {}
 
