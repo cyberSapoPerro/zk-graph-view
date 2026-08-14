@@ -153,6 +153,16 @@ def build_legend_html(
             var el = document.getElementById('legend-' + tag);
             el.style.opacity = hiddenTags[tag] ? '0.3' : '1';
 
+            // Hide/show the tag node itself
+            var tagNodeId = 'tag_' + tag;
+            var tagNode = network.body.data.nodes.get(tagNodeId);
+            if (tagNode) {{
+                network.body.data.nodes.update({{
+                    id: tagNodeId,
+                    hidden: hiddenTags[tag]
+                }});
+            }}
+
             for (var nodeId in nodeTags) {{
                 if (nodeTags[nodeId] === tag) {{
                     var node = network.body.data.nodes.get(nodeId);
@@ -255,6 +265,7 @@ def make_graph(
     directed: bool = False,
     output_path: Optional[str] = None,
     orphans: str = "drop",
+    show_tags: bool = True,
 ) -> Network:
     """Render an interactive note graph using Pyvis.
 
@@ -307,6 +318,24 @@ def make_graph(
     # ``orphans``: "ghost" renders a placeholder node and keeps the edge,
     # "error" raises, and "drop" (default) skips the edge and warns.
     ghost_ids: set = set()
+    # Add tag nodes and link notes to all their tags
+    if show_tags:
+        for tag in unique_tags:
+            if tag == "untagged":
+                continue
+            tag_id = f"tag_{tag}"
+            net.add_node(
+                tag_id,
+                label=f"#{tag}",
+                color=color_map[tag],
+                size=10,
+                shape="square",
+            )
+            for note in data["notes"]:
+                if tag in note.get("tags", []):
+                    net.add_edge(note["filenameStem"], tag_id)
+
+    # Validate edge references and aggregate orphaned edges by missing node
     orphaned_refs: Dict[str, List[str]] = {}
 
     def resolve(node: str, referenced_by: str) -> bool:

@@ -51,6 +51,9 @@ def main():
         default="drop",
         help="Handle a link whose endpoint has no note: drop (skip and warn), "
              "ghost (render a placeholder node), or error (raise)",
+        "--show-tags",
+        action="store_true",
+        help="Show tags as nodes in the graph"
     )
 
     args = parser.parse_args()
@@ -59,6 +62,7 @@ def main():
     output_path = args.output
     colors = args.colors
     directed = args.directed
+    show_tags = args.show_tags
 
     if input_path:
         data = get_json_from_input_path(input_path)
@@ -74,6 +78,7 @@ def main():
         directed=directed,
         output_path=output_path,
         orphans=args.orphans,
+        show_tags=show_tags,
     )
 
 
