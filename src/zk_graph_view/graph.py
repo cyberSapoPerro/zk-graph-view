@@ -3,6 +3,7 @@
 import tempfile
 import warnings
 import webbrowser
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import colorir as cl
@@ -247,6 +248,23 @@ def build_legend_html(
     return legend
 
 
+def build_click_handler_html() -> str:
+    """Return a script that opens a note's file URL when its node is clicked."""
+    return """
+    <script type="text/javascript">
+        network.on("click", function (params) {
+            if (params.nodes && params.nodes.length > 0) {
+                var nodeId = params.nodes[0];
+                var node = nodes.get(nodeId);
+                if (node && node.noteUrl) {
+                    window.open(node.noteUrl, "_blank");
+                }
+            }
+        });
+    </script>
+    """
+
+
 def make_graph(
     data: Dict[str, Any],
     palette: str = "carnival",
@@ -290,9 +308,14 @@ def make_graph(
     for note in data["notes"]:
         node_id = note["id"]
         node_ids.add(node_id)
+        note_path = note.get("path") or f"{node_id}.md"
+        note_url = Path(note_path).resolve().as_uri()
         net.add_node(
             node_id,
             label=note["title"],
+            title=note_url,
+            noteUrl=note_url,
+            font={"color": "#0066cc"},
             color=color_map[note["tag"]],
             size=10 + 10 * np.log(note["backlinks"] + 1),
             shape="dot",
@@ -356,15 +379,18 @@ def make_graph(
         html_path = output_path
     net.write_html(html_path)
 
+    click_handler_html = build_click_handler_html()
+    extra_html = click_handler_html
     if render_legend:
         note_tags = {note["id"]: note["tag"] for note in data["notes"]}
         legend_html = build_legend_html(color_map, note_tags, ordered_tags)
-        with open(html_path, "r+") as f:
-            html = f.read()
-            html = html.replace("</body>", legend_html + "\n</body>")
-            f.seek(0)
-            f.write(html)
-            f.truncate()
+        extra_html = legend_html + click_handler_html
+    with open(html_path, "r+") as f:
+        html_content = f.read()
+        html_content = html_content.replace("</body>", extra_html + "\n</body>")
+        f.seek(0)
+        f.write(html_content)
+        f.truncate()
 
     webbrowser.open(f"file://{html_path}")
 

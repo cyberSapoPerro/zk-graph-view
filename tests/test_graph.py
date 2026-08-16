@@ -1,5 +1,9 @@
 """Tests for zk_graph_view.graph module."""
 
+import json
+import pathlib
+import re
+import tempfile
 import warnings
 import pytest
 from zk_graph_view.api import transform_json_data
@@ -291,3 +295,60 @@ def test_subdir_link_connects_real_nodes():
         edge["from"] == "pages/n1" and edge["to"] == "journals/n2"
         for edge in net.edges
     )
+
+
+def test_note_titles_are_clickable_links():
+    """Note nodes carry a noteUrl and the page injects a click handler."""
+    data = {
+        "notes": [
+            {
+                "filename": "note1.md",
+                "filenameStem": "note1",
+                "path": "note1.md",
+                "title": "Note 1",
+                "tags": ["idea"],
+            },
+            {
+                "filename": "note2.md",
+                "filenameStem": "note2",
+                "path": "pages/note2.md",
+                "title": "Note 2 & <>",
+                "tags": [],
+            },
+        ],
+        "links": [],
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output = pathlib.Path(tmpdir) / "graph.html"
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            with pytest.MonkeyPatch().context() as m:
+                m.setattr("zk_graph_view.graph.webbrowser.open", lambda x: None)
+                make_graph(data, output_path=str(output))
+        assert [str(warning.message) for warning in w] == []
+
+        html = output.read_text()
+        nodes_match = re.search(
+            r"nodes = new vis\.DataSet\((\[.*?\])\);", html, re.DOTALL
+        )
+        assert nodes_match is not None
+        nodes = json.loads(nodes_match.group(1))
+        by_id = {node["id"]: node for node in nodes}
+
+        note_node = by_id["note1"]
+        assert note_node["label"] == "Note 1"
+        assert note_node["font"]["color"] == "#0066cc"
+        assert note_node["noteUrl"].startswith("file:///")
+        assert note_node["noteUrl"].endswith("note1.md")
+
+        subdir_node = by_id["pages/note2"]
+        assert subdir_node["label"] == "Note 2 & <>"
+        assert subdir_node["noteUrl"].endswith("pages/note2.md")
+
+        tag_node = by_id["tag_idea"]
+        assert tag_node["label"] == "#idea"
+        assert "noteUrl" not in tag_node
+
+        assert "network.on(\"click\"" in html
+        assert "window.open(node.noteUrl" in html
