@@ -12,6 +12,7 @@ Visualize your Zettelkasten graph from [`zk`](https://github.com/zk-org/zk) as a
 - Visualize networks interactively
 - Apply tag-based coloring and filtering
 - Render directed or undirected graphs
+- Visualize tags as nodes (*optional*)
 - Choose the color palette (*optional*)
 - Save the HTML output (*optional*)
 
