@@ -51,6 +51,9 @@ def main():
         default="drop",
         help="Handle a link whose endpoint has no note: drop (skip and warn), "
              "ghost (render a placeholder node), or error (raise)",
+    )
+
+    parser.add_argument(
         "--show-tags",
         action="store_true",
         help="Show tags as nodes in the graph"
