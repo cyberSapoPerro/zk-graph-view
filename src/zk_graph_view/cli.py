@@ -50,7 +50,7 @@ def main():
         choices=["drop", "ghost", "error"],
         default="drop",
         help="Handle a link whose endpoint has no note: drop (skip and warn), "
-             "ghost (render a placeholder node), or error (raise)"
+             "ghost (render a placeholder node), or error (raise)",
     )
 
     parser.add_argument(
